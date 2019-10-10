@@ -1,0 +1,63 @@
+{{- if and .Values.cloudsql.enabled (eq .Values.postgresql.enabled false) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "airflow.fullname" . }}-sql-proxy
+  labels:
+{{ include "airflow.labels" . | indent 4}}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudsqlproxy
+      app.kubernetes.io/name: {{ include "airflow.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: cloudsqlproxy
+        app.kubernetes.io/name: {{ include "airflow.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: sql-proxy
+        image: "{{ .Values.cloudsql.image.repository }}:{{ .Values.cloudsql.image.tag }}"
+        imagePullPolicy: {{ default "" .Values.cloudsql.imagePullPolicy | quote }}
+        command:
+        - /cloud_sql_proxy
+        - --dir=/cloudsql
+        - -instances={{- with .Values.cloudsql }}
+                     {{- .project }}:{{ .region }}:{{ .instance }}=tcp:0.0.0.0:{{ .port }}
+                     {{- end }}
+        - -credential_file=/secrets/cloudsql/credentials.json
+        ports:
+        {{- with .Values.cloudsql }}
+        - name: proxy
+          containerPort: {{ .port }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.cloudsql.resources | trim | nindent 12 }}
+        volumeMounts:
+        - name: cloudsql-oauth-credentials
+          mountPath: /secrets/cloudsql
+        - name: cloudsql
+          mountPath: /cloudsql
+      volumes:
+      - name: cloudsql-oauth-credentials
+        secret:
+          secretName: {{ include "airflow.fullname" . }}-sql-proxy
+      - name: cloudsql
+        emptyDir: {}
+      {{- with .Values.cloudsql.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cloudsql.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cloudsql.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

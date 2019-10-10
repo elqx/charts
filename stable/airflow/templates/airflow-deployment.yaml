@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "airflow.fullname" . }}
+  labels:
+{{ include "airflow.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "airflow.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "airflow.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+    {{- with .Values.airflow.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      # NFSVolumeSource does not support ownership management or SELinux relabeling,
+      # therefore, usage of securityContext.fsGroup is pointless.
+      # To give the pod access to write logs to the  NFS Volume solution is to use
+      # initContainers.
+      initContainers:
+      - name: permission-fix
+        image: busybox
+        command: ["/bin/chmod","-R","777", "/usr/local/airflow/logs"]
+        volumeMounts:
+        - name: logs
+          mountPath: /usr/local/airflow/logs
+          subPath: logs
+      containers:
+        - name: webserver
+          image: "{{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}"
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+          command:
+          - /entrypoint.sh
+          args:
+          - webserver
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          envFrom:
+          - secretRef:
+              name: {{ include "airflow.fullname" . }}-sql-proxy-env
+          - configMapRef:
+              name: {{ include "airflow.fullname" . }}-sql-proxy-env
+            #livenessProbe:
+            #httpGet:
+            #  path: /health
+            #  port: http
+            #readinessProbe:
+            #httpGet:
+            #  path: /health
+            #  port: http
+          resources:
+            {{- toYaml .Values.webserver.resources | trim | nindent 12 }}
+          volumeMounts:
+          - name: config
+            mountPath: /usr/local/airflow/airflow.cfg
+            subPath: airflow.cfg
+          - name: dags
+            mountPath: /usr/local/airflow/dags
+          - name: logs
+            mountPath: /usr/local/airflow/logs
+            subPath: logs
+        - name: scheduler
+          image: "{{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}"
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy }}
+          command:
+          - /entrypoint.sh
+          args:
+          - scheduler
+          envFrom:
+          - secretRef:
+              name: {{ include "airflow.fullname" . }}-sql-proxy-env
+          - configMapRef:
+              name: {{ include "airflow.fullname" . }}-sql-proxy-env
+          resources:
+            {{- toYaml .Values.scheduler.resources | trim | nindent 12 }}
+          volumeMounts:
+          - name: config
+            mountPath: /usr/local/airflow/airflow.cfg
+            subPath: airflow.cfg
+          - name: dags
+            mountPath: /usr/local/airflow/dags
+          - name: logs
+            mountPath: /usr/local/airflow/logs
+            subPath: logs
+      {{- with .Values.airflow.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.airflow.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.airflow.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ template "airflow.serviceAccountName" . }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ include "airflow.fullname" . }}-config
+      - name: dags
+        persistentVolumeClaim:
+          claimName: {{ include "airflow.fullname" . }}-dags
+      - name: logs
+        persistentVolumeClaim:
+          claimName: {{ include "airflow.fullname" . }}-logs

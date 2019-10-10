@@ -1,0 +1,28 @@
+{{- if and .Values.cloudsql.enabled (eq .Values.postgresql.enabled false) }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "airflow.fullname" . }}-sql-proxy
+  labels:
+{{ include "airflow.labels" . | indent 4 }}
+  annotations:
+  {{- if .Values.cloudsql.service.annotations }}
+{{ toYaml .Values.cloudsql.service.annotations | trim | indent 4 }}
+  {{- end }}
+spec:
+  selector:
+    app: cloudsqlproxy
+    app.kubernetes.io/name: {{ include "airflow.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  {{- with .Values.cloudsql.service }}
+  type: {{ .type }}
+  ports:
+  - name: http
+    protocol: TCP
+    port: {{ .externalPort | default 5432 }}
+    {{- if (and (eq .type "NodePort") (not (empty .nodePort.http))) }}
+    nodePort: {{ .nodePort.http }}
+    {{- end }}
+    targetPort: 5432
+  {{- end }}
+{{- end }}
