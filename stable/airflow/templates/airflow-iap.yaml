@@ -1,8 +1,8 @@
 {{- if .Values.cloudiap.enabled }}
 apiVersion: v1
 data:
-  client_id: MjE5MDEzNDA5NzkzLXJicWtzaTl2aTRjcGJkbzhoNjQ1djlhc2l2OXJtYTY0LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29t
-  client_secret: ODNpbmtva1V6STZoZFE3WktwMzdSX0Rw
+  client_id: {{ required "A valid .Values.cloudiap.clientId entry is required!" .Values.cloudiap.clientId }}
+  client_secret: {{ required "A valid .Values.cloudiap.clientSecret is required!" .Values.cloudiap.clientSecret }}
 kind: Secret
 metadata:
   name: airflow-iap

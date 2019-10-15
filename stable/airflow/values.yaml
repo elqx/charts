@@ -174,3 +174,5 @@ cloudsql:
 
 cloudiap:
   enabled: false
+  clientId:
+  clientSecret:
