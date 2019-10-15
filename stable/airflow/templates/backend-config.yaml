@@ -1,0 +1,11 @@
+{{- if .Values.cloudiap.enabled }}
+apiVersion: cloud.google.com/v1beta1
+kind: BackendConfig
+metadata:
+  name: airflow-backend-config
+spec:
+  iap:
+    enabled: true
+    oauthclientCredentials:
+      secretName: airflow-iap
+{{- end }}

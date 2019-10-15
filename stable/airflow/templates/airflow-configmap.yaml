@@ -623,12 +623,12 @@ data:
 
     [google]
     {{- if .Values.auth.enabled }}
-      # Google Client Id
-      client_id = {{ .Values.auth.clientId }}
-      # Google Client Secret
-      client_secret = {{ .Values.auth.clientSecret }}
-      # Google callback route
-      oauth_callback_route = {{ .Values.auth.callbackRoute}}
-      # Google allowed domains
-      domain = {{ .Values.auth.allowedDomains }}
+    # Google Client Id
+    client_id = {{ .Values.auth.clientId }}
+    # Google Client Secret
+    client_secret = {{ .Values.auth.clientSecret }}
+    # Google callback route
+    oauth_callback_route = {{ .Values.auth.callbackRoute}}
+    # Google allowed domains
+    domain = {{ .Values.auth.allowedDomains }}
     {{- end }}

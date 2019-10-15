@@ -11,6 +11,7 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   selector:
+    app: airflow
     app.kubernetes.io/name: {{ include "airflow.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
   ports:

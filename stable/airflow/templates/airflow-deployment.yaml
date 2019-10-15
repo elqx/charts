@@ -8,11 +8,13 @@ spec:
   replicas: 1
   selector:
     matchLabels:
+      app: airflow
       app.kubernetes.io/name: {{ include "airflow.name" . }}
       app.kubernetes.io/instance: {{ .Release.Name }}
   template:
     metadata:
       labels:
+        app: airflow
         app.kubernetes.io/name: {{ include "airflow.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
@@ -49,14 +51,14 @@ spec:
               name: {{ include "airflow.fullname" . }}-sql-proxy-env
           - configMapRef:
               name: {{ include "airflow.fullname" . }}-sql-proxy-env
-            #livenessProbe:
-            #httpGet:
-            #  path: /health
-            #  port: http
-            #readinessProbe:
-            #httpGet:
-            #  path: /health
-            #  port: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
           resources:
             {{- toYaml .Values.webserver.resources | trim | nindent 12 }}
           volumeMounts:

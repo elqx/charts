@@ -14,7 +14,7 @@ airflow:
 
   tolerations: []
 
-  affinity: {}
+  affinity: {} 
 
 nameOverride: ""
 fullnameOverride: ""
@@ -32,21 +32,27 @@ auth:
 
 service:
   annotations: {}
+  # if Cloud IAP is enabled, then add the following annotation and change service type to NodePort
+  # cloud.google.com/backend-config: '{"default": "airflow-backend-config"}'
   type: ClusterIP
   externalPort: 8080
   nodePort:
     http:
 
+# If Cloud IAP is enabled, then ingress class must be 'gce', this is the 
+# default ingress class on GKE, so no need to ingress class annotation.
 ingress:
   enabled: false
   annotations: {}
-    # kubernetes.io/tls-acme: "true"
-    # kubernetes.io/ingress.class: "nginx"
-    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  # kubernetes.io/ingress.global-static-ip-name: "airflow-static-ip"
+  # kubernetes.io/ingress.allow-http: "false"
+  # kubernetes.io/tls-acme: "true"
+  # kubernetes.io/ingress.class: "nginx"
+  # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  # cert-manager.io/issuer: "letsencrypt-production"
   hosts:
   - host: charts-example.local
     paths: []
-
 
   tls: []
 
@@ -105,11 +111,11 @@ nfs:
 # This is gcs-syncd agent that pulls dags and plugins from a GCS bucket.
 sync:
   image:
-    repository: 
-    tag: 
+    repository: gcr.io/eloquamart/gcs-syncd
+    tag: latest
     pullPolicy: IfNotPresent
 
-  bucket: 
+  bucket:
 
   resources: {}
 
@@ -137,7 +143,7 @@ cloudsql:
   user: 
   # Cloud SQL user password
   # Password here must not be base64 encrypted
-  password: 
+  password:
   # Cloud SQL database name
   database: 
   # Cloud SQL GCP project
@@ -165,3 +171,6 @@ cloudsql:
   tolerations: {}
 
   affinity: {}
+
+cloudiap:
+  enabled: false

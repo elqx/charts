@@ -1,0 +1,9 @@
+{{- if .Values.cloudiap.enabled }}
+apiVersion: v1
+data:
+  client_id: MjE5MDEzNDA5NzkzLXJicWtzaTl2aTRjcGJkbzhoNjQ1djlhc2l2OXJtYTY0LmFwcHMuZ29vZ2xldXNlcmNvbnRlbnQuY29t
+  client_secret: ODNpbmtva1V6STZoZFE3WktwMzdSX0Rw
+kind: Secret
+metadata:
+  name: airflow-iap
+{{- end }}
