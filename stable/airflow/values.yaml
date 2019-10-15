@@ -40,7 +40,7 @@ service:
     http:
 
 # If Cloud IAP is enabled, then ingress class must be 'gce', this is the 
-# default ingress class on GKE, so no need to ingress class annotation.
+# default ingress class on GKE, so no need to add ingress class annotation.
 ingress:
   enabled: false
   annotations: {}
